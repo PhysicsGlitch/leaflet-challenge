@@ -1,6 +1,7 @@
 // Store our API endpoint inside queryUrl
-var queryUrl = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=" +
-  "2014-01-02&maxlongitude=-69.52148437&minlongitude=-123.83789062&maxlatitude=48.74894534&minlatitude=25.16517337";
+var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson";
+
+// Perform a GET request to the query URL
 
 
 // Define map
@@ -12,12 +13,7 @@ var queryUrl = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&
     zoom: 5
   });
 
-var earthquakeData = {
-"type": "FeatureCollection",                                                                          
-"features": [
-{"type":"Feature","properties":{"mag":0.56,"place":"5km WNW of Cobb, CA","time":1602082251250,"updated":1602082349815,"tz":null,"url":"https://earthquake.usgs.gov/earthquakes/eventpage/nc73467841","detail":"https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/nc73467841.geojson","felt":null,"cdi":null,"mmi":null,"alert":null,"status":"automatic","tsunami":0,"sig":5,"net":"nc","code":"73467841","ids":",nc73467841,","sources":",nc,","types":",nearby-cities,origin,phase-data,","nst":8,"dmin":0.00599,"rms":0.01,"gap":118,"magType":"md","type":"earthquake","title":"M 0.6 - 5km WNW of Cobb, CA"},"geometry":{"type":"Point","coordinates":[-122.7785034,38.836834,2.15]},"id":"nc73467841"}
-]
-};
+
 // app basic tilelayres 
 
   var satellitemap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
@@ -29,42 +25,33 @@ var earthquakeData = {
     accessToken: API_KEY
   }).addTo(myMap);
 
-  var darkmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
-    attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
-    maxZoom: 18,
-    id: "dark-v10",
-    accessToken: API_KEY
-  });
 
-
-var earthquakes = L.geoJSON(earthquakeData, {
-          
-    
-             
+function plot_earthquake (data) {
+    var earthquake = L.geoJSON(data, {
     
     style: function(feature) {
-        
+        // This sets the color interpolation for the various degrees of earthquake depth
          var depth_color = "";
           if (feature.geometry.coordinates[2] > 90 ) 
-          { depth_color = "red"}
+          { depth_color = "#FF5733"}
           else if (feature.geometry.coordinates[2] >= 80 ) 
-          { depth_coler = "orange"} 
+          { depth_coler = "#FF6B33"} 
           else if (feature.geometry.coordinates[2] >= 70 ) 
-          { depth_color = "blue"}
+          { depth_color = "#FFDD33"}
           else if (feature.geometry.coordinates[2] >= 60 ) 
-          { depth_color = "yellow"}
+          { depth_color = "#F0FF33"}
           else if (feature.geometry.coordinates[2] >= 50 ) 
-          { depth_color = "green"}
+          { depth_color = "#D7FF33"}
           else if (feature.geometry.coordinates[2] >= 40 ) 
-          { depth_color = "red"}
+          { depth_color = "#CEFF33"}
           else if (feature.geometry.coordinates[2] >= 30 ) 
-          { depth_color = "red"}
+          { depth_color = "#BBFF33"}
           else if (feature.geometry.coordinates[2] >= 20 ) 
-          { depth_color = "red"}
+          { depth_color = "#93FF33"}
           else if (feature.geometry.coordinates[2] >= 10 ) 
-          { depth_color = "green"}
+          { depth_color = "#71FF33"}
           else if (feature.geometry.coordinates[2] > -15 ) 
-          { depth_color = "yellow"};  
+          { depth_color = "#33FF52"};  
         
         
         return {
@@ -73,7 +60,7 @@ var earthquakes = L.geoJSON(earthquakeData, {
       
     pointToLayer: function(feature, latlng) {
         return new L.CircleMarker(latlng, {
-        radius: 10*feature.properties.mag, 
+        radius: 2.5*feature.properties.mag, 
         fillOpacity: 0.85
         });
     },
@@ -82,12 +69,26 @@ var earthquakes = L.geoJSON(earthquakeData, {
         layer.bindPopup("<h3>" + feature.properties.place +
    "</h3><hr><p>" + new Date(feature.properties.time) + "</p>");
   }
-  });
+  })
+
+    
+   myMap.addLayer(earthquake)
+};
+
+// Finalize our Plot
+
+d3.json(queryUrl, function(data) {
+  // Once we get a response, send the data.features object to the createFeatures function
+  for (var i = 0; i < data.features.length; i++) {
+        plot_earthquake(data.features[i]) ;
+}
+});
+
 
 
   // Create our map, giving it the streetmap and earthquakes layers to display on load
 
-myMap.addLayer(earthquakes);
+
 
 
 
