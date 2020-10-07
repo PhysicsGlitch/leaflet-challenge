@@ -25,6 +25,8 @@ var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_mo
     accessToken: API_KEY
   }).addTo(myMap);
 
+//
+
 
 function plot_earthquake (data) {
     var earthquake = L.geoJSON(data, {
@@ -33,26 +35,18 @@ function plot_earthquake (data) {
         // This sets the color interpolation for the various degrees of earthquake depth
          var depth_color = "";
           if (feature.geometry.coordinates[2] > 90 ) 
-          { depth_color = "#FF5733"}
-          else if (feature.geometry.coordinates[2] >= 80 ) 
-          { depth_coler = "#FF6B33"} 
+          { depth_color = "#FF3333"}
           else if (feature.geometry.coordinates[2] >= 70 ) 
-          { depth_color = "#FFDD33"}
-          else if (feature.geometry.coordinates[2] >= 60 ) 
-          { depth_color = "#F0FF33"}
+          { depth_coler = "#FF7433"} 
           else if (feature.geometry.coordinates[2] >= 50 ) 
-          { depth_color = "#D7FF33"}
-          else if (feature.geometry.coordinates[2] >= 40 ) 
-          { depth_color = "#CEFF33"}
+          { depth_color = "#FFB533"}
           else if (feature.geometry.coordinates[2] >= 30 ) 
-          { depth_color = "#BBFF33"}
-          else if (feature.geometry.coordinates[2] >= 20 ) 
-          { depth_color = "#93FF33"}
+          { depth_color = "#FFF633"}
           else if (feature.geometry.coordinates[2] >= 10 ) 
-          { depth_color = "#71FF33"}
-          else if (feature.geometry.coordinates[2] > -15 ) 
-          { depth_color = "#33FF52"};  
-        
+          { depth_color = "#A5FF33"}
+          else if (feature.geometry.coordinates[2] >= -10 ) 
+          { depth_color = "#33FF33" }
+          else { depth_color = "#86FF33"};  
         
         return {
         color: depth_color
@@ -75,7 +69,36 @@ function plot_earthquake (data) {
    myMap.addLayer(earthquake)
 };
 
-// Finalize our Plot
+function getColor(d) {
+    return d > 90 ? "#FF3333" :
+           d >= 70  ? "#FF7433" :
+           d >= 50  ? "#FFB533" :
+           d >= 30  ? "#FFF633" :
+           d >= 10   ? "#A5FF33" :
+           d >= -10   ? "#33FF33" :
+                      "#86FF33";
+}
+// Add Legend to map https://gis.stackexchange.com/questions/133630/adding-leaflet-legend
+var legend = L.control({position: 'bottomright'});
+
+legend.onAdd = function (myMap) {
+
+    var div = L.DomUtil.create('div', 'info legend'),
+        grades = [-10, 10, 30, 50, 70, 90],
+        labels = [];
+
+    // loop through our density intervals and generate a label with a colored square for each interval
+    for (var i = 0; i < grades.length; i++) {
+        div.innerHTML +=
+            '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+            grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+    }
+
+    return div;
+};
+
+legend.addTo(myMap);
+// Finally we can perform a d3.json call that runs each feature through the plot_earthquake function
 
 d3.json(queryUrl, function(data) {
   // Once we get a response, send the data.features object to the createFeatures function
@@ -85,8 +108,6 @@ d3.json(queryUrl, function(data) {
 });
 
 
-
-  // Create our map, giving it the streetmap and earthquakes layers to display on load
 
 
 
