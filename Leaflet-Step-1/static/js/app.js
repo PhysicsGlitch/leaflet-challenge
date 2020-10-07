@@ -20,12 +20,12 @@ var earthquakeData = {
 };
 // app basic tilelayres 
 
-  var streetmap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+  var satellitemap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
     attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
     tileSize: 512,
     maxZoom: 18,
     zoomOffset: -1,
-    id: "mapbox/streets-v11",
+    id: "mapbox/satellite-v9",
     accessToken: API_KEY
   }).addTo(myMap);
 
@@ -37,21 +37,43 @@ var earthquakeData = {
   });
 
 
-
-
-
 var earthquakes = L.geoJSON(earthquakeData, {
-         
-      
-      style: function(feature) {
+          
+    
+             
+    
+    style: function(feature) {
+        
+         var depth_color = "";
+          if (feature.geometry.coordinates[2] > 90 ) 
+          { depth_color = "red"}
+          else if (feature.geometry.coordinates[2] >= 80 ) 
+          { depth_coler = "orange"} 
+          else if (feature.geometry.coordinates[2] >= 70 ) 
+          { depth_color = "blue"}
+          else if (feature.geometry.coordinates[2] >= 60 ) 
+          { depth_color = "yellow"}
+          else if (feature.geometry.coordinates[2] >= 50 ) 
+          { depth_color = "green"}
+          else if (feature.geometry.coordinates[2] >= 40 ) 
+          { depth_color = "red"}
+          else if (feature.geometry.coordinates[2] >= 30 ) 
+          { depth_color = "red"}
+          else if (feature.geometry.coordinates[2] >= 20 ) 
+          { depth_color = "red"}
+          else if (feature.geometry.coordinates[2] >= 10 ) 
+          { depth_color = "green"}
+          else if (feature.geometry.coordinates[2] > -15 ) 
+          { depth_color = "yellow"};  
+        
+        
         return {
-        color: "green"
-        };
-    },
+        color: depth_color
+        };},
       
     pointToLayer: function(feature, latlng) {
         return new L.CircleMarker(latlng, {
-        radius: 10, 
+        radius: 10*feature.properties.mag, 
         fillOpacity: 0.85
         });
     },
