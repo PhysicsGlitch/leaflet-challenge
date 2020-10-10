@@ -1,9 +1,6 @@
 // Store our API endpoint inside queryUrl
 var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson";
-
-// Define map
-
-
+ 
 
 // app basic tilelayres 
 
@@ -32,12 +29,16 @@ var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_mo
     accessToken: API_KEY
   });
 
-function plot_earthquake (data) {
-    var earthquake = L.geoJSON(data, {
+// Store our API endpoint inside queryUrl
+var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson";
+
+var earthquakes = L.layerGroup();
+
+function plot_layer (data, layer_group) {
+    var layer_item = L.geoJSON(data, {
     
     style: function(feature) {
-        // This sets the color interpolation for the various degrees of earthquake depth. After the fact I saw in the leaflet documentation that they just defined a color function.
-        // I used that for creating the legend but this also works as well. 
+        // This sets the color interpolation for the various degrees of earthquake depth
          var depth_color = "";
           if (feature.geometry.coordinates[2] > 90 ) 
           { depth_color = "#FF3333"}
@@ -51,7 +52,7 @@ function plot_earthquake (data) {
           { depth_color = "#A5FF33"}
           else if (feature.geometry.coordinates[2] >= -10 ) 
           { depth_color = "#33FF33" }
-          else { depth_color = "#33FF33"};  
+          else { depth_color = "#86FF33"};  
         
         return {
         color: depth_color
@@ -69,18 +70,46 @@ function plot_earthquake (data) {
    "</h3><hr><p>" + new Date(feature.properties.time) + "</p>");
   }
   })
+
     
-   myMap.addLayer(earthquake)
+   layer_group.addLayer(layer_item);
 };
 
-  var myMap = L.map("map", {
+
+
+
+d3.json(queryUrl, function(data) {
+  // Once we get a response, send the data.features object to the createFeatures function
+  for (var i = 0; i < data.features.length; i++) {
+        plot_layer(data.features[i], earthquakes) ;
+}
+});
+
+
+
+
+var tectonic_plates = L.layerGroup();
+
+var plates_query = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json"
+
+d3.json(plates_query, function(data) {
+  // Once we get a response, send the data.features object to the createFeatures function
+  for (var i = 0; i < data.features.length; i++) {
+        plot_layer(data.features[i], tectonic_plates) ;
+}
+});
+
+   
+ var myMap = L.map("map", {
     center: [
       37.09, -95.71
     ],
     zoom: 5,
-    layers: satellitemap
+      layers: [satellitemap, earthquakes]
   });
 
+
+    
 function getColor(d) {
     return d > 90 ? "#FF3333" :
            d >= 70  ? "#FF7433" :
@@ -112,14 +141,7 @@ legend.onAdd = function (myMap) {
 legend.addTo(myMap);
 // Finally we can perform a d3.json call that runs each feature through the plot_earthquake function
 
-
-var earthquakes = d3.json(queryUrl, function(data) {
-  // Once we get a response, send the data.features object to the createFeatures function
-  for (var i = 0; i < data.features.length; i++) {
-        plot_earthquake(data.features[i]) ;
-}
-});
-
+  // Define a baseMaps object to hold our base layers
 
 
  var baseMaps = {
@@ -128,9 +150,14 @@ var earthquakes = d3.json(queryUrl, function(data) {
      "Street Map": streetmap
   };
 
- 
+    //Define overlay maps
 
-L.control.layers(baseMaps).addTo(myMap);
+var overlayMaps = {
+  "Earthquakes": earthquakes,
+    "Tectonic Plates": tectonic_plates
+ };
+
+L.control.layers(overlayMaps, baseMaps).addTo(myMap);
 
 
 
