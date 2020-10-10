@@ -1,8 +1,8 @@
-// Store our API endpoint inside queryUrl
+// To create our basic plot I need to define a query and then my base map with a center (I chose Chicago) and zoom level
+
+
+// We can store our API endpoint inside queryUrl
 var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson";
-
-// Perform a GET request to the query URL
-
 
 // Define map
 
@@ -14,7 +14,7 @@ var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_mo
   });
 
 
-// app basic tilelayres 
+// I chose the satellitemap as my base layer map and define it below.
 
   var satellitemap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
     attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
@@ -25,8 +25,8 @@ var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_mo
     accessToken: API_KEY
   }).addTo(myMap);
 
-//
 
+// I created a plot_earthquake function that adds style, circlemarkers and popups to each element in my geoJson layer which is compiled through the Leaflet function L.geoJson
 
 function plot_earthquake (data) {
     var earthquake = L.geoJSON(data, {
@@ -65,10 +65,24 @@ function plot_earthquake (data) {
   }
   })
 
-    
+// This final code adds the individual coordinates to my layer group    
    myMap.addLayer(earthquake)
 };
 
+
+// Having defined my functions I perform a d3 query and then iterate through the features of the data set in the plot_earthquake function to create my earthquake layer. 
+
+d3.json(queryUrl, function(data) {
+  // Once we get a response, send the data.features object to the createFeatures function
+  for (var i = 0; i < data.features.length; i++) {
+        plot_earthquake(data.features[i]) ;
+}
+});
+
+   
+// This getColor fuction is taken from the leaflet documentation and sorts out my html color interpolation scheme for the legend.
+
+    
 function getColor(d) {
     return d > 90 ? "#FF3333" :
            d >= 70  ? "#FF7433" :
@@ -77,8 +91,12 @@ function getColor(d) {
            d >= 10   ? "#A5FF33" :
            d >= -10   ? "#33FF33" :
                       "#86FF33";
-}
-// Add Legend to map https://gis.stackexchange.com/questions/133630/adding-leaflet-legend
+};
+
+
+// Add Legend to map I used the leaflet documentation and this help to get my final code https://gis.stackexchange.com/questions/133630/adding-leaflet-legend
+
+// This sets my legend position.
 var legend = L.control({position: 'bottomright'});
 
 legend.onAdd = function (myMap) {
@@ -87,6 +105,10 @@ legend.onAdd = function (myMap) {
         grades = [-10, 10, 30, 50, 70, 90],
         labels = [];
 
+    // some earthquakes had an undetermined magnituted which showed up as black on my map so I added this legend entry to explain the black dots.    
+    
+    div.innerHTML += '<i style="background:' + "#000000" +'"></i> Unknown Magnitude<br>'
+    
     // loop through our density intervals and generate a label with a colored square for each interval
     for (var i = 0; i < grades.length; i++) {
         div.innerHTML +=
@@ -98,19 +120,18 @@ legend.onAdd = function (myMap) {
 };
 
 legend.addTo(myMap);
-// Finally we can perform a d3.json call that runs each feature through the plot_earthquake function
-
-d3.json(queryUrl, function(data) {
-  // Once we get a response, send the data.features object to the createFeatures function
-  for (var i = 0; i < data.features.length; i++) {
-        plot_earthquake(data.features[i]) ;
-}
-});
 
 
+  // Define a baseMaps object to hold our base layers
+  var baseMaps = {
+    "Satellite Map": satellitemap
+  };
 
+  // Create overlay object to hold our overlay layer
+  var overlayMaps = {
+    Earthquakes: earthquakes
+  };
 
+// Finall I can add a layer control that puts my base and overlay maps into the final plot
 
-
-
-
+L.control.layers(baseMaps, overlayMaps).addTo(myMap);
